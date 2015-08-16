@@ -1,0 +1,190 @@
+回顾：
+    信号量集：控制访问共享资源的最大进程数
+              同步进程的执行 （生产者 消费者）
+           semget() : 就是申请一个数组空间，每个数组元素就是一个信号量
+           semctl(): 
+                SETVAL： 给信号量赋初值
+                GETVAL： 获取某个特定信号量的值
+                IPC_RMID: 删除信号量集
+           semop(): 给特定的信号量 ++ --的操作
+-----------------------------------------------------------
+网络编程：
+    1、常识 
+       	OSI模型：
+       	       七层
+       	       五层
+       	协议： http ftp tcp udp ip arp rarp ppp rj-45
+       	协议簇: TCP/IP
+       	TCP:  连接 可靠  三次握手
+       	UDP： 无连接 不可靠
+       	IP地址： IPv4  IPv6
+       	        IPv4 , 32bit数据
+       	               点分十进制 192.168.1.8
+       	         IP地址 =  网络号 + 主机号
+       	         					 192.168.1.8
+       	         子网掩码：255.255.0.0  
+       	            
+       	        DNS:域名解析
+       	 网络字节序: UDP/TCP协议规定，把接收到的第一个字节当高位字节来看待，这就要求发送端发送的第一个字节是高位字节，网络字节序是大端模式。 很X86的CPU中使用的是小端模式，
+ 在51单片机中使用的是大端模式 ，DSP是小端模式， ARM大小端软件可配置。
+       	 		 0x12345678
+       	     大端模式
+       	     小端模式
+       	     如何编程测试当前主机为大端模式还是小端模式？
+       	          union
+       	     judge_endian.c
+				端口： 本质是一个非负的整数(0~65535),代表计算机中的一个进程。
+				  这些端口中，有些已经被占用，编程时不能再使用
+				     常见被占用的端口：
+				          80: http
+				          21: ftp
+				          23: telnet
+				   0~1023系统预先占用，不要使用该范围内的端口
+				   48000~65535：系统预留，随时可能征用，不要使用
+				   1024~48000：可以使用， oracle (1521)
+2、socket编程
+    《unix网络编程》 第1卷
+    网络功能是unix/linux的一个重要特点，有着悠久的历史，因此有一个非常固定的编程套路。
+    socket编程： 本地通信
+                 网络通信（重点）				 
+  2.1 基于ＴＣＰ的网络编程
+  	基于连接的， 在交互过程中，服务器和客户端要保持连接，不能断开。重发一切出错的数据，保证数据的正确性 、完整性和顺序性，缺点是资源消耗比较大。 
+  2.1.1 编程步骤
+  	服务器端编程步骤
+       1）创建socket（套接字） socket()
+       2) 准备通信使用到的地址
+       3）将创建的socket和通信地址绑定 bind()
+       4) 监听端口 listen()
+       5) 等待客户端的连接 accpet()
+       6) 通信双方收发数据
+       		read / write
+          send /recv
+       7）关闭socket
+      tcp_server.c
+  	客户端编程步骤
+  	   1）创建socket
+  	   2) 准备通信地址
+  	   3）连接到服务器 connect()
+  	   4) 收发数据  read/wrtie  send/recv
+  	   5）关闭socket
+  	2.1.2API详解
+  		1）socket
+  		  int socket(domain, type, protocol)
+  		  	domain,
+  		  			AF_UNIX/AF_LOCAL/AF_FILE:本地通信
+  		  			AF_INET: 网络通信 IPv4(重点)
+  		  			AF_INET6: 网络同性IPv6
+  		  			注意： 如果AF换成PF效果一样
+  		  	type, 选择通信类型，主要包括：
+  		  	    SOCK_STREAM: TCP
+  		  	    SOCK_DGRAM:  UDP
+  		  	protocol, 本来应该指定通信协议，但现在基本废弃
+  		  	          因为协议已经在前两个参数指定完成，
+  		  	          给0即可。
+  		  	返回值：成功返回socket描述符，失败-1 errno
+  		 2)bind
+  		    int bind(sockfd, struct sockaddr *addr, size)
+  		    	sockfd, 要绑定的套接字的描述符
+  		    	size,  第二个参数占据内存空间的大小
+  		    	addr, 涉及三个数据结构
+  		    strcut sockaddr, sockaddr_un , sockaddr_in
+  		    sockaddr, 主要用于函数的参数，不负责存储数据
+  		    sockaddr_un, 当做本地通信时，用于存储本地通信的
+  		    						 地址 
+  		    						 <?/un.h>
+  		    sockaddr_in, 当做网络通信时，负责存储网络通信的
+  		    						 地址数据
+  		    						 <netinet/in.h>
+  		    		struct sockaddr_in
+  		    		{
+  		    				sin_family; //用于指定协议簇，和socket()
+  		    										//的参数domain保持一致
+  		    				sin_port;  // 网络通信使用的端口号
+  		    struct in_addr	sin_addr;  //存储网络通信的IP地址
+  		    		}
+  		  3) htons
+  		  4) inet_aton "192.168.182.10" 
+  		      ascii to net address
+  		  5) int listen(sockfd, backlog)
+					 将sockfd参数所标识的套接字标记为被动模式，使之可以接受连接请求  		   
+  		    backlog表示未决连接请求队列的最大长度，即允许最多有多少个未决连接请求存在。若服务器的未决连接请求已达到该值，则客户端通过connect（）连接服务器的操作将返回-1，且errno为ECONNREFUSED。
+  		  6）accept
+  		  	int accept(sockfd, struct sockaddr *addr, 
+  		  										 socklen_t *addrlen)
+  		  	 从 sockfd参数所标识套接字对应的未决连接请求队列中取出的一个连接请求，同时创建一个新的套接字，用于该连接通信，返回套接字的描述符
+  		  addr 和addrlen用于输出连接请求发起者的地址信息
+  		  返回值，为新创建用于和客户端通信的套接字描述符。
+  		          失败-1， errno
+  		  7) inet_ntoa
+  		  8) recv
+  		     int recv(sockfd, buf, len, flags)
+  		     	  flags, 通常取0 ，阻塞收取数据
+  		     	         O_NONBLOCK,不阻塞，如果未接收到数据返
+  		     	                     回错误信息
+  		     	  返回值：
+  		     	  		 >0, 实际接收数据字节数
+   		         		 -1， 出错， errno
+   		         		 0， 通信的另一端关闭
+  		  9）send
+  		  	int send(sockfd, buf, len, flags)
+							flags, 通常取0 ，阻塞发送
+											O_NONBLOCK, 不阻塞，发送失败返回出错
+											             信息。
+				10) connect
+						int connect(sockfd, addr, addr_len) 
+							参数参考bind
+		关于 “address already in use”?
+				int reuse = 1;
+		    setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR,
+		                &reuse, sizeof(reuse));
+		    作用：允许重用本地地址
+		    bind(...)					
+					  
+   2.2 基于ＵＤＰ的网络编程   
+   		无连接协议，在网络交互过程中不保持连接，只需要在发送数据时连接一下。
+   		优点是资源消耗少，数据的可靠性完整性顺序性得不到保证。
+   		 QQ视频聊天 发电报  写信寄信
+   	2.2.1 编程步骤
+   	    服务器端
+   	    	1）创建socket
+   	    	2) 准备地址
+   	    	3） 绑定socket 和地址
+   	    	4）收发数据 recvfrom  sendto
+   	    	5) 关闭套接字
+   	    客户端
+   		 		1）创建socket
+   		 		2) 准备地址
+   		 		3）收发数据 recvfrom sendto
+   		 		4) 关闭套接字
+   		 udp_server.c
+   		 udp_client.c
+   2.2.2API详解
+       1）recvfrom
+          ssize_t recvfrom(sockfd, buf, len, flags,
+          									struct sockaddr *src_addr, 
+          									addrlen)
+					src_addr： 传出参数，用来返回buf中接收到的数据来源哪台主机 
+					addrlen: 目标数据结构的大小  		
+   		    返回值： 
+   		          >0, 实际接收数据字节数
+   		          -1， 出错， errno
+   		2） sendto
+   				ssize_t sendto(sockfd, buf, len, flag,
+   											 struct sockaddr *dest_addr,
+   											 addrlen)
+				dest_addr: 用来指定通过sockfd 将buf中的数据发送给谁
+				     		          
+作业： 掌握TCP /UDP 的编程模型
+      拿张纸画一下 server 第一步 第二步 。。。。
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,207 @@
+回顾：
+    信号发送函数
+        kill(pid, signum)
+        alarm(nsec):nsec秒后给调用者进程发送SIGALRM
+                    取消定时，nsec取值为0即可
+        raise(signum) = kill(getpid(), signum)
+        sigqueue(了解)
+       sleep() / pause():当调用者进程收到信号，函数立即返回
+    信号的屏蔽
+         关键代码执行过程中，不希望被信号打断
+         信号集： 5个函数 + sigset_t (类型)
+            sigfillset()
+         		sigemptyset()
+         		sigaddset()
+         		sigdelset()
+         		sigismember()
+          如何屏蔽信号: sigprocmask(), 屏蔽/解除屏蔽
+                how, SIG_SETMASK
+                newset
+                oldset         
+------------------------------------------------------------
+UC理论性内容到此截止，后续学习偏重应用，一般具有固定的编程步骤。
+
+IPC，进程间通信
+   1）文件
+   2）信号
+   3）管道
+   4）共享内存
+   5）消息队列
+   6）信号量
+   7）socket          
+1、管道， 通常使用的管道都是半双工的
+   1.1 有名管道
+   1.2 无名管道：适用于父子进程间的通信
+        涉及到的API， 
+          int pipe(int pipefd[2])
+          作用： 创建管道文件
+                 以只读方式打开管道文件，将文件描述符保存到
+                 pipefd[0]
+                 以只写方式打开管道文件， 将文件描述符保存
+                 到pipefd[1]
+        编程步骤：
+           1）调用pipe()函数在内核中创建管道文件，并通过输
+             出参数pipefd获得读写管道的文件描述符
+           2）调用fork（）,创建子进程
+           3）写数据的进程关闭读端 close(pipefd[0])
+              读数据的进程关闭写端 close(pipefd[1])
+           4) 传输数据
+           5）父子进程分别关闭自己的文件描述符
+        编程： 一端写入20个数据另一端读出
+             pipe.c
+2、共享内存 消息队列 信号量集    
+   以上三种IPC被称作 XSI IPC，编程具有很大的共性
+   1）标识符（人名 ）和键 （身份证编号）
+   2）键值如何确定 （身份证的编码方式）
+      a) 使用宏IPC_PRIVATE做为key, 一般用于父子进程间
+      b) 可以使用ftok()创建key (重点)
+      c) 在公共头文件中定义每个使用的key给一个固定值
+   			 key本质上就是一个整数
+   3）服务器进程用此键值来创建IPC对象
+       xxxget():shmget() / msgget()/ semget() 
+      客户机进程用此键值来获取该IPC对象
+   4）服务器进程和客户机进程之间就可以交换信息
+      系统函数：
+          共享内存：shmat()
+          消息队列：msgsnd msgrecv
+          信号量集： semop()
+   5) 获取IPC对象的属性信息 （孩子信息）
+      xxxctl: shmctl / msgctl / semctl
+   6) 销毁创建的IPC对象
+       xxxctl : shmctl /msgctl/ semctl
+2.1 共享内存
+   内核管理一片物理内存，允许不同的进程映射，多个进程可以映射同一块物理内存，映射后的虚拟地址可能不尽相同，但对应的物理地址相同。
+   映射物理内存叫挂接，使用完后解除映射叫脱接
+   特点：最快的IPC。
+   2.1.1 编程步骤
+       1）获得key ,头文件中定义 后者使用ftok()
+       2)使用key, 创建/获取一块共享内存 shmget()
+       3)映射共享内存，获取虚拟地址 挂接 shmat()
+       4)使用共享内存进行数据交换  C编程
+       5）解除映射， 脱接 shmdt()
+       6) 如果后续不会再使用该共享内存，销毁该共享内存
+          shmctl()
+   2.1.2 编程
+       shma.c       
+         key_t ftok(pathname, project_id) 
+         		pathname, 存在并且可访问的路径（文件名）
+         		project_id, 取值范围 1~255
+         int shmget(key, size, flags)
+             key,就是ftok（）返回值
+             size,要申请的共享内存的字节数
+                  建议size为4096的整数倍
+                  若是创建共享内存，必须指定size为非0
+                  若是获取共享内存，size取0即可
+             flags: 
+             			IPC_CREAT,创建共享内存
+             			IPC_EXCL, 测试key 对应的共享内存是否存在
+             			modes, 权限位 ，保存到flags低9bits
+             返回值：该共享内存的ID（人名）
+         void *shmat(shmid, shmaddr, shmflg)
+				    shmid,要映射的共享内存段
+				    shmaddr, 等价于mmap()函数中的addr,通常取0由操作
+				             系统分配即可         
+         		shmflg, 
+         		      0, 以读写方式使用共享内存
+         		      SHM_RDONLY, 以只读方式使用共享内存
+         		返回值：映射后的首地址（虚拟地址）
+         int shmdt(shmaddr)
+         		返回值：成功返回0 ，失败返回-1  errno
+         int shmctl(shmid, cmd, buf)
+						shmid,
+						cmd: 
+						    IPC_RMID,销毁共享内存
+						    IPC_STAT,获取共享内存的属性信息
+						buf
+						返回值，成功返回0，失败-1 errno 
+		 练习：shmb.c，将shma.c写入到共享内存中的数据读取出来并打印出来 
+		 
+		 编程： 获取属性字段 shmctl.c
+		 练习： shma 进程如果没有按下回车，而是ctrl + c，会造成
+		 			它所创建的共享内存得不到销毁，如何解决问题？
+		 
+		 2.1.3 命令行访问IPC
+		     ipcs: 察看系统中现有的共享内存 消息队列 信号量
+		         ipcs -a :察看所有
+		              -m: 察看共享内存
+		              -q: 察看消息队列
+		              -s: 察看信号量集
+		     ipcrm: 删除IPC
+		优点：最快的IPC
+		缺点：需要自己编程解决访问共享内存的同步问题      
+		     
+2.2 消息队列
+	先把要传递的数据封装到消息中，然后把消息存入队列
+	消息队列也是采用内存做交互的媒介，系统内核管理一个队列，完成消息的FIFO。
+	2.2.1编程步骤
+	    创建key
+	    使用msgget()来创建/获取消息队列
+			向队列中存入消息msgsnd, 取出消息msgrcv()
+			销毁消息队列msgctl	  
+	2.2.2 消息队列的简单使用
+	     msga.c
+	     msgb.c  
+	     int msgsnd(msgid, msgp, size, msgflg)
+          msgid, 确定操作哪个消息队列
+          msgp, 写入消息队列的数据  
+          			"hello"
+          			 \0\0\0\0\0
+          size, 消息体长度, 有效消息长度，不包括消息类型
+          msgflg , 0 代表阻塞 ，写入不成功不返回
+                   IPC_NOWAIT 非阻塞，写入不成功立刻返回
+                   一个错误信息
+       int msgrcv(msgid, msgp, size, msgtype, msgflg)
+       		msgid, 确定要操作哪个消息队列
+       		msgp, 取到消息放入的缓冲区
+       		size, 期望获取消息的长度，有效消息长度，
+       					不包括消息类型
+       		msgtype,
+       		      =0， 取消息队列中的第一个消息，忽略类型
+       		      >0, 接收特定类型消息中的第一个
+       		      <0, 接收类型小于等于msgtype绝对值的消息，
+       		      		从小到大返回
+       		      		
+       		      		
+       		      		 
+       		msgflg, 0 代表阻塞，读取不成功不返回
+       		        IPC_NOWAIT, 非阻塞，不成功立刻返回一个错
+       		              误信息
+       		返回值，成功返回读取到的字节个数，
+       		        失败返回-1 errno
+    2.2.3 正规用法
+    		消息分有类型消息和无类型消息。有类型消息编程规范，接收数据时可以进行细分。
+    		涉及到的消息结构体
+    		struct msgbuf
+    		{
+    				long mtype; //消息类型
+    				buf; //消息的具体内容
+    		}
+    		msgc.c
+    		
+       		           		                  		      
+         
+         
+         
+         
+         
+         
+         
+   
+                  
+        
+   		          
+          
+          
+          
+          		
+         
+         
+         
+         
+         
+         
+         
+              
+        
+        
+        

@@ -1,0 +1,81 @@
+samba服务器的图形化界面安装指令：
+sudo apt-get install samba samba-common system-config-samba python-glade2 gksu
+samba安装完成后，在uniy dash里搜索samba，即可见图形化的samba；
+个人比较喜欢图形化的界面设置samba
+另外一种安装samba服务器的方法：
+sudo apt-get update
+sudo apt-get install samba samba-common
+sudo mkdir /home/share
+sudo chmod 777 /home/share
+sudo gedit /etc/samba/smb.conf
+修改配置文件smb.conf
+
+1、输入"security = user"。
+
+2、输入"图Ｂ"中指定的语句-->保存。
+1、打开"终端窗口"，输入"sudo useradd smbuser"-->回车-->用户创建成功。
+
+2、输入"sudo smbpasswd -a smbuser"-->回车-->输入两次密码-->回车-->密码设置成功，这个用户属于smb组。
+
+3、输入"sudo service smbd restart"重启samba服务-->回车-->服务重启成功。
+
+
+gem5的一个网址，用于提示操作步骤的：
+https://bitbucket.org/pumpkine/document/src/4d00b9ecc28d59c9ea87b2878587d5cfee2bc058/gem5-run-bench-step.md?at=master
+sudo apt-get install git scons g++ python-dev swig m4
+
+
+nfs的配置选项：
+挂载nfs的命令
+sudo mount -t nfs 192.168.0.227:/home/lab302/nfs_share/302d/ ./Documents/
+192.168.0.227:/home/lab302/nfs_share/302d/-----要挂载的nfs的ip地址和目录
+./Documents/------需要挂载的地点，即自己电脑里任选一个目录
+
+卸载nfs的命令：
+ umount -f ./Documents 
+
+ssh的安装命令：
+sudo apt-get install openssh-server 
+ubuntu14.04使用ssh远程登陆的操作命令（在终端里）
+ssh -l lab302 192.168.0.227
+ssh -l -----命令和参数
+lab302 ----要登陆的用户名
+192.168.0.227 ------要登陆的服务器ip地址
+记住第一次登陆的时候需要输入yes（不过他有提示的哈）
+
+ftp服务器的配置网址：
+http://jingyan.baidu.com/article/67508eb4d6c4fd9ccb1ce470.html
+
+sudo apt-get update
+sudo apt-get install vsftpd
+sudo mkdir /home/uftp
+sudo useradd -d /home/uftp -s /bin/bash uftp
+sudo passwd uftp
+使用gedit修改配置文件/etc/vsftpd.conf
+
+sudo gedit /etc/vsftpd.conf
+向文件中添加"
+userlist_deny=NO
+userlist_enable=YES 
+userlist_file=/etc/allowed_users
+"和"seccomp_sandbox=NO"-->使文件中的"local_enable=YES"-->保存。
+使用gedit新建/etc/allowed_users文件
+
+打开"终端窗口"，输入"sudo gedit /etc/allowed_users"-->回车-->输入uftp-->保存， 文件创建成功。
+使用gedit查看/etc/ftpusers文件中的内容
+
+打开"终端窗口"，输入"sudo gedit /etc/ftpusers"-->回车-->打开这个文件后，看一看有没有uftp这个用户名，如果没有，就直接退出。如果有就删除uftp,因为这个文件中记录的是不能访问FTP服务器的用户清单。
+
+ubuntu14.04　64bit中teamviewer安装注意事项
+下载32bit的deb安装包：teamviewer_10.0.41499_i386.deb
+下载之后，直接双击，选择install即可．
+
+
+-lm 表示需要链接数学库libm.a或libm.so或libm.sl
+
+使用如下编译命令告诉程序数学库的位置即可
+ gcc  filename.c  -lm
+
+或
+ gcc  filename.c  -lm  -L/lib  -L/usr/lib 
+

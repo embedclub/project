@@ -1,0 +1,27 @@
+//类型转换的使用
+#include <iostream>
+using namespace std;
+
+class A
+{
+public:
+	virtual void foo(void){}
+};
+class B : public A{};
+class C : public A{};
+class D{};
+
+int main(void)
+{
+	B b;
+	// B* -> A* 类型转换
+	A* pa = &b;
+	cout << "pa = " << pa << endl;
+	// A* -> B* 类型转换
+	B* pb = dynamic_cast<B*>(pa);
+	cout << "pb = " << pb << endl;
+	// 0 假 NULL 表示转换失败,比较安全
+	C* pc = dynamic_cast<C*>(pa);
+	cout << "pc = " << pc << endl;
+	return 0;
+}

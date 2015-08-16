@@ -1,0 +1,46 @@
+回顾：
+    线程的同步
+       互斥量
+       		pthread_mutex_t lock;
+       		pthread_mutex_init(...)
+       		pthread_mutex_lock(...)
+       		pthread_mutex_unlock(...)
+       		pthread_mutex_destroy(...)
+       		死锁  如何避免死锁
+       信号量（专门用于线程间）
+       		sem_t sem;
+       		sem_init(...)
+       		sem_wait(...) // -1
+       		sem_post(...) // +1
+       		sem_destroy	
+       条件变量（建议从生产者消费者例子开始）
+       		pthread_cond_t cond;
+       		pthread_cond_init
+       		pthread_cond_wait(...)// 线程暂停
+       		pthread_cond_signal(...)//恢复暂停的线程
+       														//唤醒队列中的一个线程
+       		pthread_cond_broadcast（...）//唤醒所有
+ 					pthread_cond_destroy(...) 
+ 		参考day16/condition.c
+ 	察看某个特定进程中的线程：
+ 	     ps -mp PID
+----------------------------------------------------------
+如何判断客户端断开连接？
+     recv(...)如果返回0代表断开连接
+     
+  简单的Makefile编写实例   
+     
+ 《跟我一起写makefile》    
+	Makefile三要素
+	     目标：依赖
+	     		（ＴＡＢ） 命令
+	
+
+ 	     
+ 	     
+ 	          
+       
+       
+       
+       
+       

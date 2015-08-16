@@ -1,0 +1,15 @@
+/*
+    人员信息管理系统
+*/
+#include <stdio.h>
+int main() {
+    int id = 0;
+    char name[10] = {};
+    float salary = 0.0f;
+    FILE *p_file = fopen("person.bin", "ab");
+    if (p_file) {
+        fclose(p_file);
+        p_file = NULL;
+    }
+    return 0;
+}

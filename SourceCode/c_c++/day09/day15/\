@@ -1,0 +1,20 @@
+/*
+    动态分配内存练习
+*/
+#include <stdio.h>
+#include <stdlib.h>
+typedef struct {
+    int x, y;
+} pt;
+int main() {
+    pt *p_pt = (pt *)malloc(3 * sizeof(pt));
+    if (p_pt) {
+        free(p_pt);
+        p_pt = NULL;
+    }
+    return 0;
+}
+
+
+
+

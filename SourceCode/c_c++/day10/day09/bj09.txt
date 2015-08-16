@@ -1,0 +1,171 @@
+回顾：
+    创建子进程的方式二
+         vfork + exec
+         vfork与fork的区别在于vfork不去复制父进程的数据段、BSS、堆区 栈区
+         exec是使用新程序的代码段、数据段等去覆盖原有进程的代码段数据段等
+        pid = vfork()
+        if(pid == 0)
+        {
+        		exec
+        }
+        execl
+        execv
+        execlp
+        execve
+        system("ls *.c >a.txt")
+     信号： 软件层次对中断机制的模拟
+            kill -l 
+            非可靠信号 1~31
+            可靠信号  34~64
+            如何产生信号
+                1）键盘
+                2） 程序执行
+                3）软件编程
+                4） 命令行
+                   kill -信号 PID
+            如何处理信号
+                1）默认处理方式
+                2）忽略信号
+                3）自定义处理方式
+信号相关的API
+1、安装信号处理函数 signal /sigaction
+    void (*)(int) signal(signum, handler)
+             handler 三种取值：
+               1）SIG_DFL
+               2) SIG_IGN
+               3) void(*)(int) 函数指针
+         SIGKILL SIGSTOP是不能忽略也不能自定义  
+    fork()时子进程继承父进程的信号处理机制
+    vfork() +exec 创建的子进程不进程父进程的信号处理机制，采用默认的处理方式   
+2、信号发送函数
+   2.1 kill
+   		int kill(pid_t pid, int signo)
+   			pid指定了给哪个/哪些进程发送信号signo
+   			>0:给指定的一个进程发信号
+   			=0：给本组所有进程发信号
+   			=-1：给所有进程发信号 （有权限）
+   			<-1:给指定的进程组发信号
+   			返回值：
+   		kill.c 
+   	注意：killall a.out 可以杀死所有叫a.out的进程
+   2.2 alarm
+      1）alarm（）用来设置信号SIGALRM在经过指定秒数后传送给当前的进程。
+       clock.c
+      2) SIGALRM信号默认的处理是终止进程。
+      3）若之前已设定过且未超时，
+        则调用alarm()会重新定时，并且返回之前定时的剩余时间
+      4）alarm(seconds),若seconds=0表示取消之前设定过且未
+         超时的定时
+      alarm.c 
+   2.3 raise
+       向调用者自身发送信号
+       raise.c
+   2.4 sigqueue  
+      向指定的pid进程发送信号sig,附加 value
+      sigqueue sigaction两个函数联合使用
+   附加内容：
+       sleep()：会使用调用进程进入睡眠状态，收到信号睡眠被打断，sleep()立即返回，返回值为剩余秒数 
+       pause():会使用调用进程进入睡眠状态，直到该进程收到信号。
+3、信号的屏蔽
+	3.1 信号集
+	   kill -l 
+	   ./a.out
+	   1)多个信号的集合类型
+	      sigset_t, 每个bit位代表一个信号是否被屏蔽
+	   2）相关函数
+	   		//将信号集set中全部信号对应的bit置1
+	      sigfillset(sigset_t *set);
+	      //将信号集set中全部信号对应的bit清0
+	      sigemptyset(sigset_t *set);
+	      //将信号集set中信号signum对应的bit置1
+	      int sigaddset(sigset_t *set, int signum);
+	      //将信号集set中信号signum对应的bit清0
+	      int sigdelset(sigset_t *set, int signum);
+	      //判断信号集set中信号signum对应的bit是否为1
+	      //如果为1，返回1
+	      //否则返回0
+	      int sigismember(sigset_t *set, int signum)
+	    sigset.c
+	3.2 信号的屏蔽
+	   信号什么时候到来无法确定和控制，但可以使用信号屏蔽技术让信号的处理时间延后。信号屏蔽主要用于关键代码的执行，不是阻止信号的到来，而是将信号的处理延后。关键代码执行完毕后一定要解除信号的屏蔽。
+	  函数sigprocmask()可以用来屏蔽/解除屏蔽信号。
+	  int sigprocmask(how, newset, oldset) 
+	       how, 是信号屏蔽的方式
+	           SIG_BLOCK: 之前的屏蔽字 + newset屏蔽字
+	               A B C  + C D E -> A B C D E
+	           SIG_UNBLOCK: 之前的屏蔽字 - newset屏蔽字
+	               A B C  - C D E -> A B
+	           SIG_SETMASK: 直接使用新的屏蔽，与之前屏蔽无关
+	               A B C    C D E -> C D E (最常用)
+	       newset,是新的权限屏蔽字
+	       oldset，传出参数，用于传出以前的信号屏蔽字，便于
+	               后期恢复
+	    sigmask.c
+	对于不可靠信号，通过sigprocmask() 设置信号屏蔽之后，相同的被屏蔽的信号只会被屏蔽一次，并且在取消屏蔽之后，该信号只会被处理一次，其余的直接忽略掉。
+	而对于可靠信号，会在信号屏蔽期间产生一个队列，该信号不断放入该队列中，一旦信号屏蔽被取消，该队列中的信号会被依次处理，不会丢失。    
+3、进程间通信 ： IPC （Inter-Process Communication）
+  3.1 IPC的作用？
+     早期的unix系统都是采用多进程的方式来解决问题的，因此多进程之间就需要交换数据，而进程之间不能直接交换数据，IPC就是以上矛盾的。
+  3.2 IPC机制有哪些种？
+     1）文件
+     2）信号
+     3）管道
+     4）共享内存
+     5）信号量
+     6）消息队列
+     7）socket
+	 各有什么特点？ 给定场景你会选择哪种IPC机制，为什么？ 
+	3.3 管道如何使用  
+	    特点：
+	       1）管道是最古老的IPC，目前很少使用
+	       2）管道是以文件作为交互的媒介，分为有名管道和无名
+	          管道
+	       3）历史上的管道通常指的是半双工管道
+	   3.3.1 有名管道：基于有名文件（管道文件）的管道通信
+	      1）命令行方式
+	         mkfifo fifo 
+	         echo "aaa" >fifo
+	         cat fifo
+	        练习：创建a.pipe管道文件
+	              一端读 cat
+	              另一端写 ls ./ 的内容写入a.pipe
+	      2)编程模型
+	       A进程            B进程       相关函数
+	   ------------------------------------------
+	    创建管道                       mkfifo() 
+	   ------------------------------------------
+	    写打开管道        读打开管道   open()
+	    -----------------------------------------
+	    写入数据          读取数据     write/read
+	    -----------------------------------------
+	    关闭管道          关闭管道      close
+	    -----------------------------------------
+	    删除管道                        unlink()
+	    ------------------------------------------- 
+	    pipea.c
+	    pipeb.c
+	   注意： B端异常关闭会导致管道断裂，管道断裂系统会给A进程发信号 SIGPIPE信号，该信号默认动作是终止进程
+	 作业： 修改pipea.c文件
+	        pipea 当每秒写入一个数据过程中，
+	        pipeb 读 管道中的数据 ctrl + c
+	        如何让A进程自动删除管道文件？
+	        提示： 加入SIGPIPE信号的自定义处理方式。
+	    
+
+
+
+
+
+
+
+
+
+
+        
+        
+        
+        
+        
+        
+        
+        

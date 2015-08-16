@@ -1,0 +1,29 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.8	//
+Clear_Enter	Client_Function.c	/^void Clear_Enter(char *str)$/;"	f
+Client_Create	Client_Function.c	/^void Client_Create()$/;"	f
+Data_Interaction	Server_Function.c	/^void *Data_Interaction(void *srg)$/;"	f
+Data_Recv	Client_Function.c	/^void *Data_Recv(void *srg)$/;"	f
+Data_Send	Client_Function.c	/^void *Data_Send(void *srg)$/;"	f
+Deal_Client_Connect	Server_Function.c	/^pthread_t Deal_Client_Connect(int *clientfd)$/;"	f
+Input_User	Client_Function.c	/^void Input_User()$/;"	f
+Pthread_Create	Client_Function.c	/^void Pthread_Create()$/;"	f
+Send_Inform	Server_Function.c	/^void Send_Inform()$/;"	f
+Server_Create	Server_Function.c	/^void Server_Create()$/;"	f
+clientfd	Server_Function.c	/^int clientfd[MAX_CLIENT] = {0};$/;"	v
+lock	Server_Function.c	/^pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;$/;"	v
+main	Client.c	/^int main()$/;"	f
+main	Server.c	/^int main()$/;"	f
+print_other	Client_Function.c	/^void print_other(char *str)$/;"	f
+print_self	Client_Function.c	/^void print_self()$/;"	f
+print_system	Client_Function.c	/^void print_system(char *str)$/;"	f
+self	Client_Function.c	/^USER self = {0};$/;"	v
+sigFunc	Client_Function.c	/^void sigFunc(int signum)$/;"	f
+sigFunc	Server_Function.c	/^void sigFunc(int signum)$/;"	f
+sockfd	Client_Function.c	/^int sockfd = 0;$/;"	v
+sockfd	Server_Function.c	/^int sockfd = 0;$/;"	v
+user	Server_Function.c	/^USER user = {0};$/;"	v
