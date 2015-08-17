@@ -24,8 +24,8 @@ SYSSIZE = 0x3000
 !
 ! 以下是前面这些文字的翻译:
 !
-bootsect.s
-(C) 1991 Linus Torvalds 版权所有
+!bootsect.s
+!(C) 1991 Linus Torvalds 版权所有
 !
 ! bootsect.s 被 bios-启动子程序加载至 0x7c00 (31k)处,并将自己
 ! 移到了地址 0x90000 (576k)处,并跳转至那里。
@@ -39,14 +39,14 @@ bootsect.s
 !
 ! 加载程序已经做的够简单了,所以持续的读出错将导致死循环。只能手工重启。
 ! 只要可能,通过一次取取所有的扇区,加载过程可以做的很快的。
-.globl begtext, begdata, begbss, endtext, enddata, endbss	！定义了6个全局标识符；
-.text		！文本段；
+.globl begtext, begdata, begbss, endtext, enddata, endbss	!定义了6个全局标识符；
+.text		!文本段；
 begtext:
-.data		！数据段；
+.data		!数据段；
 begdata:
-.bss		！堆栈段；
+.bss		!堆栈段；
 begbss:
-.text		！文本段；
+.text		!文本段；
 
 SETUPLEN = 4				! nr of setup-sectors
 					! setup 程序的扇区数(setup-sectors)值;
@@ -99,7 +99,8 @@ go:	mov	ax,cs		! 将 ds、es 和 ss 都置成移动后代码所在的段处(0x90
 ! put stack at 0x9ff00.		! 将堆栈指针 sp 指向 0x9ff00(即 0x9000:0xff00)处
 	mov	ss,ax
 	mov	sp,#0xFF00		! arbitrary value >>512
-				! 由于代码段移动过了,所以要重新设置堆栈段的位置。
+
+	! 由于代码段移动过了,所以要重新设置堆栈段的位置。
 				! sp 只要指向远大于 512 偏移(即地址 0x90200)处
 				! 都可以。因为从 0x90200 地址开始处还要放置 setup 程序,
 				! 而此时 setup 程序大约为 4 个扇区,因此 sp 要指向大
@@ -347,8 +348,7 @@ msg1:
 .org 508	! 表示下面语句从地址 508(0x1FC)开始,所以 root_dev
 		! 在启动扇区的第 508 开始的 2 个字节中。
 root_dev:
-	.word ROOT_DEV	! 这里存放根文件系统所在的设备号(init/main.c 中会
-用)。
+	.word ROOT_DEV	! 这里存放根文件系统所在的设备号(init/main.c 中会用)。
 boot_flag:
 	.word 0xAA55	! 硬盘有效标识。
 
