@@ -3,8 +3,9 @@
 */
 #include <stdio.h>
 int main() {
-    const int num = 0;
+    //const int num = 0;
     //num = 10;   错误
+	const int num;
     printf("请输入一个数字：");
     scanf("%d", &num);
     printf("num是%d\n", num);

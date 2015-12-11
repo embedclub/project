@@ -1,25 +1,22 @@
 /*
-    指针练习
+    指针类型返回值演示
 */
 #include <stdio.h>
+int *neg(int *p_num, int size) {
+    int num = 0;
+    for (num = 0;num <= size - 1;num++) {
+        *(p_num + num) = 0 - *(p_num + num);
+    }
+    return p_num;
+}
 int main() {
-    int num = 0, num1 = 0, num2 = 0;
-    int *p_num = &num, *p_num1 = &num1, *p_num2 = &num2;
-    printf("请输入三个数字：");
-    scanf("%d%d%d", p_num, p_num1, p_num2);
-    if (*p_num > *p_num1 && *p_num > *p_num2) {
-        printf("最大数字是%d\n", *p_num);
+    int arr[] = {1, 2, 3, 4, 5}, num = 0;
+    int *p_num = neg(arr, 5);
+    for (num = 0;num <= 4;num++) {
+        printf("%d ", *(p_num + num));
     }
-    if (*p_num1 > *p_num && *p_num1 > *p_num2) {
-        printf("最大数字是%d\n", *p_num1);
-    }
-    if (*p_num2 > *p_num && *p_num2 > *p_num1) {
-        printf("最大数字是%d\n", *p_num2);
-    }
+    printf("\n");
     return 0;
 }
-
-
-
 
 

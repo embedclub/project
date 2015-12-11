@@ -11,10 +11,10 @@ void create(int arr[], int size) {
     }
 }
 int main() {
-    int arr[7] = {}, num = 0;
+    int arr[2000000] = {}, num = 0;
     srand(time(0));
-    create(arr, 7);
-    for (num = 0;num <= 6;num++) {
+    create(arr, 2000000);
+    for (num = 0;num <= 2000000 - 1;num++) {
         printf("%d ", arr[num]);
     }
     printf("\n");
