@@ -1,0 +1,192 @@
+回顾：
+     物理地址 （酒店房间）
+     虚拟地址  （酒店房间号牌）
+     linux系统中编程都使用虚拟地址
+     每个用户态进程都有独立的3G虚拟地址空间
+     内核态程序使用3G~4G的虚拟地址空间
+     linux管理内存时以页为单位，通常一页为4096字节
+     进程内存布局 从低地址到高地址：
+          code  data bss heap .... stack
+     malloc /free: 正常使用，不要越界访问
+     brk 
+     sbrk： 内部维护一个位置指针
+     mmap/munmap:底层不维护任何东西，只是返回一个首地址
+            从位于堆区和栈区之间的空闲区域分配
+        常用场景：
+             1）动态大内存空间时
+             2）将文件映射到内存空间
+     				 3）将显存，或者视频缓冲区进行映射  
+     void *mmap(void *addr, size_t size, int prot,
+     						int flags, int fd, off_t offset)	
+     		 addr, 可以指定映射的首地址，一般为0，交给操作
+     		 				系统指定
+     		 size, 就是分配内存的大小，映射时以页为单位
+     		 prot, 是分配内存的权限，读写权限
+     		       PROT_READ|PROT_WRITE
+     		       PROT_READ  00000....10
+     		       PROT_WRITE 00000...100
+     		 flags, 通常只有其中三个宏
+     		       MAP_SHARED
+     		       MAP_PRIVATE
+     		       	 以上两个宏二选一，指明映射的内存是否共享，
+     		         MAP_SHARED只对映射文件有效，
+     		       MAP_ANONYMOUS:映射物理内存，默认情况下映射
+     		                     文件
+     		           如果指定了MAP_ANONYMOUS就是映射物理内存
+     		           那么，后续参数fd offset无效
+     		  fd,
+     		  offset
+     int munmap(void *addr, size_t size);
+     		addr, mmap映射得到的首地址
+     		size, mmap映射指定内存空间大小
+     		
+     mmap.c		  
+------------------------------------------------------
+文件操作
+    标准C的库函数： fopen fclose fread fwrite fseek ...
+         系统调用： open   close  read write  lseek   
+系统调用：
+    用户层的程序不能直接调用内核中的函数
+    系统提供了一系列的函数允许用户层的程序通过这系列的函数进入内核，调用内核中实现的功能函数，这一系列的函数称作系统调用。 
+基本概念：
+    linux中几乎一切皆文件。 目录 内存 各种硬件设备
+    1）普通文件
+    2）目录文件
+    3）设备文件
+        控制台 ： /dev/console
+       	U盘：     /dev/sdbn
+       	    mount  /dev/sdb1 /mnt
+       	    umount /mnt
+       	空设备:  /dev/null
+       	标准输入输出：/dev/tty 代表键盘 显示器
+       	    ls >b.txt
+       	    ls >/dev/tty
+       重定向问题
+             ls >a.txt
+             ls >a.txt 2>&1(将标准输出 标准出错
+             								重定向到a.txt文件)
+    4）软链接文件
+        windows系统不支持软链接，在linux下压缩的文件，
+        不要试图在windows下做解压缩
+    5）硬链接文件	    
+
+1.1 回顾带缓冲的文件IO
+     FILE * fopen(文件路径， 模式) 
+          模式：
+              r ---只读
+              r+  ----读写
+              w  ------只写 
+              w+ --------读写，会新建或清空已有文件
+              a ---------追加方式
+    readwrite.c
+    time a.out
+        real : 总的执行时间
+        user : 用户空间执行时间
+        sys  : 内核空间执行时间
+        								 内核
+      fwrite ---> write  ---->xxx_write 
+1.2 系统调用实现文件操作
+    1.2.1 open
+    	int open(char *filename, int flags, ...) 
+    			filename, 要打开文件的名称（包含路径）
+    			flags, 主要包括：
+    			    O_RDONLY,
+    			    O_WRONLY,
+    			    O_RDWR,
+    			   		以上三个必取其一
+  						O_CREAT创建标志位，文件存在就打开不存在就创建
+  						O_TRUNC:打开文件时自动清空文件
+  						O_EXCL: 测试文件是否存在，文件不存在则创建
+  						        若存在则出错返回-1
+  						  通常O_TRUNC O_EXCL和O_CREAT结合使用
+  						O_APPEND: 采用追加方式打开文件
+  			  mode, 当flag中包含O_CREAT，使用该参数，
+  			  			指定要创建文件的权限 
+  			  返回值: 文件描述，整型
+  	深入： 1)文件描述符
+  	       2)当一个进程启动时系统默认给该进程自动打开三个文件：标准输入  标准输出 标准出错
+  	 UC STDIN_FILENO     0
+  	    STDOUT_FILENO    1
+  	    STDERR_FILENO		 2  
+  	       3)默认情况下一个进程最多能打开1024个文件
+  	           ulimit -n
+  	 		   4)关于文件权限
+  	 		    owner           group             other
+  		 r     w    x      r   w     x        r   w     x
+  int bit8 bit7 bit6   bit5 bit4  bit3    bit2  bit1 bit0
+
+    0666: 0 代表进制 8进制 
+           666
+           002（取反 &）
+           664
+    
+  	1.2.2 write
+  	    size_t write(fd, buf, count)
+						fd, 要操作的文件对应的文件描述符
+						buf, 源数据地址
+						count, 期望写入数据的个数  
+						返回值：实际写入字节个数
+						        出错返回-1 ，errno
+		1.2.3 close
+		     int close(int fd)
+		     		fd, 要关闭的文件描述符
+		     		返回值：成功返回0
+		     		        失败返回-1， errno  
+		1.2.4 read
+			    ssize_t read(fd, buf, count)
+						fd,
+						buf, 目标缓冲区首地址
+						count,期望读取的字节数
+						返回值： 成功返回实际读取到的字节个数
+						         0，代表读到了文件的末尾
+						         -1，代表出错，errno
+		readwrite2.c
+		练习： 编程实现a.txt中的内容复制到b.txt中
+		修改readwrite2.c
+		    fseek()
+		 如果想实现在文件中的任意位置进行读写lseek()
+	1.2.5 lseek
+			lseek()是fseek()的底层实现
+			读写的位置标准C中称作文件指针
+			UC中称作文件偏移量
+			off_t lseek(int fd, off_t offset, int whence)	
+					fd, 
+					offset,是偏移量， 可正可负
+					whence,是偏移的起始位置，有三个值：
+						SEEK_SET:从文件开头开始计算偏移位置
+						SEEK_CUR：从当前位置开始计算偏移
+						SEEK_END： 从文件尾开始计算偏移 
+					返回值：移动以后的位置和文件头的距离
+					        失败返回-1 errno
+				lseek(fd, 0, SEEK_CUR):获取当前文件操作位置
+				lseek(fd, 0, SEEK_END): 计算文件的大小
+		lseek.c
+		
+	作业一：员工信息管理模块，可以添加员工信息和查询员工信息
+	 writeemp.c: 要求用户输入员工信息，把该信息保存如文件
+	 reademp.c : 读出员工信息并打印
+	 员工信息： 编号id 姓名name 工资salary
+	作业二： 用户信息验证
+	      用户信息： 用户名 密码  电话 email
+	      用户注册，要求用户输入姓名 密码 电话 email
+	                1）用户名和已经保存的用户名不能重复			
+									2）密码输入两次，有确认密码的过程
+				用户登陆： 输入用户名和密码，如果和文件中已存在的信息相同打印登陆成功，反之失败
+								
+					        
+					          
+		              
+           
+          		  
+     		  
+     						
+     									 
+     				           
+     
+     
+     
+     
+     
+     
+     
+     

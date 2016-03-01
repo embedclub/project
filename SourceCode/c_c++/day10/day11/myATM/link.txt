@@ -1,0 +1,11 @@
+server:
+	gcc server.c bank.c -o server
+client:
+	gcc client.c bank.c -o client
+open:
+	gcc open.c bank.c dao.c -o open
+
+server.c 主要实现了 服务器的初始化和服务器的退出
+open.c 主要实现了消息的接收和发送，同时消息的处理
+dao.c 主要实现了 与文件的相关操作(数据层)
+client.c 主要实现了 客户端的界面和交互
