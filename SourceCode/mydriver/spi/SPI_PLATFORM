@@ -1,0 +1,68 @@
+文件名：
+	spi.c and spidev.c
+
+spi.c
+	spi_init函数涉及内容
+	1.buf = kmalloc(SPI_BUFSIZ, GFP_KERNEL);
+	  申请内核内存
+
+	2.status = bus_register(&spi_bus_type);
+	  注册spi_bus
+
+	3.status = class_register(&spi_master_class);
+	  //在sys/class下产生spi_master这个节点，用于自动产生设备节点
+
+	
+spidev.c
+	spidev_init函数处理内容
+	1.status = register_chrdev(SPIDEV_MAJOR, "spi", &spidev_fops);
+	  //注册主设备号为153的spi字符设备，spidev_fops结构下面会介绍
+
+	2.spidev_class = class_create(THIS_MODULE, "spidev");
+	  //在sys/class下产生spidev这个节点，udev会利用其在dev下产生spidev
+	  //这个设备节点
+
+	3.status = spi_register_driver(&spidev_spi_driver);
+	  //注册spi驱动
+
+	
+spi_master、spi_device和spi_driver结构体的关系
+
+	根据Linux内核的驱动模型，注册在同一总线下的驱动和设备会进行匹配。spi_bus_type总线匹配的依据是名字。这样当自己编写的spi_driver和spi_device同名的时候，spi_driver的probe方法就会被调用。spi_driver就能看到与自己匹配的spi_device了。	
+
+linux下的设备和驱动注册是分开进行的，即设备是设备，驱动是驱动，然后进行匹配。
+ Spi.c文件里面主要是封装了一些SPI函数，扫描总线信息，SPI驱动探测，注册，申请内核内存等，属于比较上层的函数
+Linux/Spi.h封装了一些SPI传输函数,如spi_write(),spi_read()等，需要提供SPI设备和传输buff和len即可。
+
+数据的发送：
+ 1：用户层发送使用write（）函数。
+2：然后调用内核驱动的write()函数。//由具体的设备写相应的发送函数
+3：内核的驱动write函数再调用spi_write（）（在linux/spi.h中定义的函数）
+4： spi_write()调用spi_sync(spi, &m);（在spi_bitbang.c中定义）这个是一个阻塞的同步传输函数，可以睡眠。
+5： spi_sync()调用spi_bitbang_transfer(struct spi_device *spi, struct spi_message *m)函数，这个是在spi_bitbang.c中定义，其实这个调用的原代码是
+return spi->master->transfer(spi, message)，调用了自己SPI结构体中的一个函数指针，在spi驱动中spi_s3c24xx.c 的probe()函数中被赋值，err = spi_bitbang_start(&hw->bitbang),这条语句把spi的master结构体注册成功。Master结构体的 transfer()函数指针被赋予真正的函数值，所以这个时候使用这个调用语句调用的才是spi_bitbang.c中的 spi_bitbang_transfer(struct spi_device *spi, struct spi_message *m)函数。
+6:在transfer()函数的主要作用是把这个spi_message加到一个工作队列里面
+queue_work(bitbang->workqueue, &bitbang->work);然后以后的事情就由系统调度来完成。这样就形成了一个管子状的，串行的先进先出的通信管道。然后就把一次 传输制作成一次”work”,“work”的具体工作内容在spi_bitbang.c中定义，由函数void bitbang_work(struct work_struct *work) 完成。
+由这个函数看出每一次的对struct spi_transfer 传输都要调用传输初始化函数
+int s3c24xx_spi_setupxfer(struct spi_device *spi,struct spi_transfer *t)，功能是设置传输的波特率和传输字节。如果这个结构体的对象设置了速度就选用这个对象的波特率，如果没有就选用spi_board_info（）结 构体得波特率。初始化结束后开启对应设备的片选，延时，间接调用驱动程序spi_s3c24xx.c中的s3c24xx_spi_txrx(struct spi_device *spi, struct spi_transfer *t)函数，原代码：
+if (!m->is_dma_mapped){
+                                 t->rx_dma = t->tx_dma = 0;
+                          status = bitbang->txrx_bufs(spi, t);
+}
+这个类似master结构体得transfer()函数调用，在spi_s3c24xx.c的probe()函数中被赋值 ，源代码是
+ hw->bitbang.txrx_bufs      = s3c24xx_spi_txrx;
+
+平台设备的驱动一般写法
+	平台设备指的就是SoC系统上带的设备,linux下的驱动和设备是分开的，驱动需要注册，设备也需要注册。
+
+	数据结构：
+
+Spi_master,spi_driver,spi_device,bus_type,class,spi_board_info,spi_message,spi_transfer
+
+	Spi_master是用来描述主机控制驱动器的驱动的，spi_driver是用来描述外设驱动的，spi_device是用来描述外部设备的，
+
+	Spi子系统的访问可以有两种方式,一种是使用SPI控制器,第二种方法是使用GPIO模拟SPI的时序,但这种方法有一个很大的缺点,即时序的模拟需要耗费大量的时间，形成访问的瓶颈，造成效率不高。这两种方法对应的主要文件在内核的drivers/spi/spi_s3c24xx_gpio.c、drivers/spi/spi_s3c24xx.c两个文件上。
+
+	spi_register_driver对应platform_driver_register
+
+

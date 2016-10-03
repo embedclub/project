@@ -1,0 +1,111 @@
+Linux系统
+	用户空间(虚拟地址为：0-3G)
+		用户程序
+		C库和配置文件
+
+	内核空间(虚拟地址为：3G-4G)
+		系统架构相关代码
+		kernel
+		系统调用接口
+		
+内核空间与用户空间的切换方式：
+	系统调用
+	硬件中断
+
+Linux内核组成：(七个方面)
+	System Call Interface(SCI)
+	Process Managenment(PM)
+	Memory Management(MM)
+	Arch(体系结构，如ARM)
+	Virtual File System(VFS) --- 隐藏各种文件系统的具体细节，为文件操作提供统一的接口
+	Network Stack
+	Device Drivers(DD)
+
+内核源码目录结构
+    Linux内核源代码采用树形结构进行组织，非常合理地把功能相关的文件放在同一个子目录中。
+
+arch目录
+    体系结构相关的代码，处理器相关的代码，SoC的名字作为子目录，且涉及的一些汇编代码 mach开头的目录代表是开发板相关的代码
+
+block目录
+    部分块设备驱动程序
+
+crypto目录
+    加密、压缩、CRC校验算法
+
+documentation
+    内核的文档
+
+drivers目录
+    设备驱动代码
+
+fs目录
+    文件系统
+
+include目录
+    头文件相关代码
+
+lib目录
+    库文件代码
+
+mm目录
+    内存管理中与体系结构无关的代码部分
+
+net目录
+    网路协议实现的代码
+
+samples
+    一些内核编程的示例代码
+
+scripts
+    配置内核的脚本
+
+security
+    SElinux的模块
+
+sound
+    音频设备的驱动代码
+
+usr
+    cpio命令实现
+
+virt
+    内核虚拟机
+
+内核编译
+
+	1、make clean	  删除产生文件，但是保留配置文件
+	   make mrproper  删除产生文件，并删除配置文件
+	   make distclean 删除备份，还有补丁文件，以及产生文件和配置文件
+
+	
+
+printk and printf
+
+
+
+BootLoader
+	u-boot源码
+	目录结构
+	    board 和开发板相关的文件
+
+	    common u-boot的命令
+
+            cpu   特定架构的相关代码
+
+	    Doc  文档目录，多读读
+
+	    include 头文件
+
+交叉工具链
+	arm-linux-gcc
+	gcc
+
+环境变量
+	/etc/profile      
+	~/.bashrc
+	/etc/environment
+
+
+
+

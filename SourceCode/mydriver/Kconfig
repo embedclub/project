@@ -1,0 +1,113 @@
+
+#
+# My Bus Devices
+#
+menu "My Bus Device"
+
+config SCC_BUS
+	tristate "MY BUS driver support"
+	default m
+	help
+	  Driver supporting the my bus for sunxi
+	  platforms.
+
+config SCC_DEVICE
+	tristate "MY Device "
+	default m
+	help
+	  Driver supporting the my bus for sunxi
+
+config SCC_DRIVER
+	tristate "MY Driver "
+	default m
+	help
+	  Driver supporting the my bus for sunxi
+
+config SCC_KOBJECT
+	tristate "kobject test"
+	default m
+	help
+	  This is a kobject
+
+config SCC_TEST_CHAR
+	tristate "char device test"
+	default m
+	help
+	  This is an example for learn char device
+
+config SPI_GPA2311
+        tristate "Infineon GPA2311 (for power switching)"
+        default n
+        help
+          SPI driver for Infineon TLE62X0 series line driver chips,
+          such as the TLE6220, TLE6230 and TLE6240.  This provides a
+          sysfs interface, with each line presented as a kind of GPIO
+          exposing both switch control and diagnostic feedback.
+
+config SUN_CLASS_MKDEV
+	tristate "make dev devices"
+	default m
+	help
+	  This is an example for learn auto make device inode
+
+config S3C2440_SPI
+	tristate "s3c2440 spi example"
+	default m
+	help
+	  This is an example for s3c2440 spi
+
+config PLATFORM_DEV
+	tristate "paltform device test example"
+	default m
+	help
+	  This is an example for platform bus and device
+
+config PLATFORM_DRV
+	tristate "paltform driver test example"
+	default m
+	help
+	  This is an example for platform bus and driver
+
+config SYSFS_KOBJECT
+	tristate "kobject tset function"
+	default m
+	help
+	  This is an example for kobject
+
+config SYSFS_KSET
+	tristate "kset test function"
+	default m
+	help
+	  This is an example for kset
+
+config SYSFS_MYSPI
+	tristate "myspi test function"
+	default m
+	help
+	  This is an example for myspi
+
+config STRUCT_LIST
+	tristate "struct list  test function"
+	default m
+	help
+	  This is an example for struct list_head
+
+config TIMER_TEST
+	tristate "timer  test function"
+	default m
+	help
+	  This is an example for struct list_head
+
+config PROC_READ
+	tristate "proc read test function"
+	default m
+	help
+	  This is an example for proc read
+
+config PROC_WRITE
+	tristate "proc write test function"
+	default m
+	help
+	  This is an example for proc write
+
+endmenu
